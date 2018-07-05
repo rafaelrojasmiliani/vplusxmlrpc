@@ -1,0 +1,500 @@
+.PROGRAM ubz.xmlrpc()
+.END
+.PROGRAM xrcall($name,argn,$args[],$types[],$output[])
+	LOCAL $auxstr[]
+  AUTO $endline
+  AUTO $newline
+  AUTO ailen
+  ;*Ambiguous AUTO invalid* (-477) ;Explanation: 
+  ;V+ has encountered an automatic variable with undetermined TYPE
+  ; add a REAL before (SEE manual)
+  AUTO REAL ici
+  AUTO REAL lenauxstr
+	$auxstr[14]=""
+	$auxstr[0]=""
+
+  $output[0]=""
+  $endline = $CHR(13)+$CHR(10)
+  $newline = $CHR(10)
+
+  CALL stai($output[])
+  CALL stai($auxstr[])
+
+
+  CALL staas($output[],"POST /RPC2 HTTP/1.0"+$endline)
+  CALL staas($output[],"Host: adeptSCARA"+$endline)
+  CALL staas($output[],"User-Agent: adeptSCARA"+$endline)
+  CALL staas($output[],"Content-Type: text/xml"+$endline)
+
+
+
+  CALL staas($auxstr[],"<?xml version='1.0'?>")
+  CALL staas($auxstr[],"<methodCall>"+$newline+"<methodName>"+$name+"</methodName>"+$newline+"<params>")
+  FOR ici=0 TO argn-1
+    CALL staas($auxstr[],"<param><value><"+$types[ici]+">")
+    CALL staas($auxstr[],$args[ici])
+    CALL staas($auxstr[],"</"+$types[ici]+"></value></param>"+$newline)
+  END
+
+  CALL staas($auxstr[],"</params></methodCall>")
+
+
+  CALL stalen($auxstr[],ailen)
+  CALL staas($output[],"Content-Length: "+$ENCODE(/I0,ailen)+$endline+$endline)
+  CALL staasa($output[],$auxstr[])
+
+  
+.END
+
+.PROGRAM xrresp(argn,$vals[],$types[],$output[])
+	LOCAL $auxstr[]
+  AUTO $endline
+  AUTO $newline
+  AUTO ailen
+  ;*Ambiguous AUTO invalid* (-477) ;Explanation: 
+  ;V+ has encountered an automatic variable with undetermined TYPE
+  ; add a REAL before (SEE manual)
+  AUTO REAL ici
+  AUTO REAL lenauxstr
+	$auxstr[14]=""
+	$auxstr[0]=""
+
+  $output[0]=""
+  $endline = $CHR(13)+$CHR(10)
+  $newline = $CHR(10)
+
+  CALL stai($output[])
+  CALL stai($auxstr[])
+
+
+  CALL staas($output[],"HTTP/1.0 200 OK"+$endline)
+  CALL staas($output[],"Server: adeptSCARA"+$endline)
+  CALL staas($output[],"Content-Type: text/xml"+$endline)
+
+  CALL staas($auxstr[],"<?xml version='1.0'?><methodResponce><params><param>")
+  IF argn>1 THEN
+	  CALL staas($auxstr[],"<array><data>")
+	  FOR ici=0 TO argn-1
+      IF STRDIF($types[ici],"nil")<>0 THEN
+		    CALL staas($auxstr[],"<value><"+$types[ici]+">")
+		    CALL staas($auxstr[],$vals[ici])
+		    CALL staas($auxstr[],"</"+$types[ici]+"></value>"+$newline)
+      ELSE
+		    CALL staas($auxstr[],"<value><nil/></value>")
+      END
+	  END
+	  CALL staas($auxstr[],"</data></array>")
+  END
+
+  CALL staas($auxstr[],"</param></params></methodResponce>")
+
+
+  CALL stalen($auxstr[],ailen)
+  CALL staas($output[],"Content-Length: "+$ENCODE(/I0,ailen)+$endline+$endline)
+  CALL staasa($output[],$auxstr[])
+
+  
+.END
+
+
+
+.PROGRAM xrntv($in[],$tag,ini,fin,$info)
+; get the value of the next tag from ini
+  AUTO info.ini
+  AUTO info.fin
+  AUTO aic.ini
+  aic.ini=ini
+
+  CALL stapos($in[],"<"+$tag+">",aic.ini,info.ini)
+
+  IF (STRDIF($tag,"int") == 0) OR (STRDIF($tag,"i4")==0) THEN
+    $tag="int"
+    CALL stapos($in[],"<int>",aic.ini,info.ini)
+    IF aic.ini == 0 THEN
+      $tag="i4"
+      aic.ini = ini
+      CALL stapos($in[],"<i4>",aic.ini,info.ini)
+    END
+  ELSE
+    CALL stapos($in[],"<"+$tag+">",aic.ini,info.ini)
+  END
+
+  IF aic.ini == 0 THEN
+    fin = 0
+    $info = ""
+    RETURN
+  END
+  info.fin=info.ini
+
+  CALL stapos($in[],"</"+$tag+">",info.fin,fin)
+
+  IF info.fin == 0 THEN
+    fin = 0
+    $info = ""
+    RETURN
+  END
+
+  $info = $UNPACK($in[],info.ini+1,info.fin-info.ini-1)
+
+.END
+
+.PROGRAM xrnt($in[],ini,fin,$tag)
+; get the NEXT ttag in the array $in from position ini
+; and returns the tag and the position OF its final char.
+  AUTO info.ini
+  AUTO info.fin
+
+  CALL stapos($in[],"<",ini,info.ini)
+
+  info.fin=info.ini
+
+  CALL stapos($in[],">",info.fin,fin)
+
+  $tag= $UNPACK($in[],info.ini+1,info.fin-info.ini-1)
+
+.END
+
+
+
+
+.PROGRAM xrpr($in[],pars,$vals[],$types[])
+  AUTO $tag
+  AUTO posaux
+  AUTO pos00
+  AUTO pos01
+  AUTO pos02
+  AUTO pos03
+  AUTO recur
+  AUTO ardim
+  pos00=0
+  pars=0
+  CALL stapos($in[],"<methodResponse>",pos00,pos01)
+  IF(pos00<>0) THEN
+    ;because xml-rpc responces have only one element
+    ;we are sure that the first array is also the
+    ;first item in the responce.
+    ;TYPE "we get a method responce begining at "+$ENCODE(/I0,pos01)
+    CALL stapos($in[],"<array>",pos01,pos00)
+  ELSE
+    TYPE "ERROR, we WAIT a methodResponce message, and we receive oher stuff"
+    pars=-1
+    RETURN
+  END
+; 1) Search the NEXT <value> tag, in the range [pos03,pos00]
+; 2) serach the <tag> after <value>, in range [pos00,pos01]
+; 3.1) If this <tag> is </value>. then we get a string
+; 3.2) If this <tag> is <array>, the we have find where
+;      does it ends, and assign the vals "(pos,dim)"
+; 3.3) If <tag> is NOT <array> DO
+; 3.3.1) If <tag> is <struct> RETURN ERROR
+; 3.3.2) Else, set pos02=pos01 and search </tag> ins range [pos02,pos03]
+  pos03=pos00
+  DO
+    CALL stapos($in[],"<value>",pos03,pos00)
+    posaux=pos00
+    IF pos03 == 0 THEN
+     ; TYPE "NO MORE VALUES"
+      RETURN
+    END
+    CALL xrnt($in[],pos00,pos01,$tag)
+    ;TYPE "next tag after <value> "+$tag
+    ;TYPE "        in region      "+$UNPACK($in[],pos01-10,20)
+    IF (STRDIF($tag,"/value")==0) THEN ; we have string or nil
+      $types[pars]="string"
+    ;TYPE "We get /value, in fact $tag = "+$tag
+      $vals[pars] = $UNPACK($in[],posaux+1,pos00-posaux-1)
+      pos03=pos01
+      ;get the VALUE in the middle
+    ELSE
+      IF STRDIF($tag,"i4")== 0 THEN
+        $types[pars] ="int"
+      ELSE
+        $types[pars] =$tag
+      END
+      IF STRDIF($tag,"array") == 0 THEN;------ IF we get an array
+        ;TYPE "we get an array, in fact $tag = "+$tag
+        recur = 1
+        ardim = 1
+        $vals[pars]  =$ENCODE(/I0,pos01)
+        WHILE recur > 0 DO
+          ;TYPE "next tag after "+$tag+" is:"
+          CALL xrnt($in[],pos01,pos02,$tag)
+          ;TYPE "                          :"+$tag+"anr"
+          IF STRDIF($tag,"array") == 0 THEN
+            recur = recur + 1
+            ardim = ardim + 1
+          END
+          IF STRDIF($tag,"/array") == 0 THEN
+            recur = recur - 1
+          END
+          pos01 = pos02
+        END
+        pos03=pos02
+        $vals[pars]  =$vals[pars]+","+$ENCODE(/I0,ardim)
+      ELSE ;----------------------------------------------- IF no array
+        ;TYPE "processing tag = "+$tag
+        IF STRDIF($tag,"struct")==0 THEN
+          TYPE "XMLRPC PARSER: STRUCT NOT SUPPORTED"
+          pars = -1
+          RETURN; struct not supported
+        END
+        pos02=pos01
+        CALL stapos($in[],"</"+$tag+">",pos02,pos03)
+        ;TYPE "        the NEXT next "+$UNPACK($in[],pos02,pos03-pos03)
+        ;TYPE "region after <value> "+$UNPACK($in[],pos02-10,20)
+        $vals[pars]  =$UNPACK($in[],pos01+1,pos02-pos01-1)
+      END
+    END
+    pars = pars + 1
+  UNTIL (STRDIF($tag,"/methodResponce") == 0) OR (STRDIF($tag,"/methodCall")==0)
+  TYPE "LAST tag is "+$tag
+.END
+
+.PROGRAM xrpc($in[],$method,pars,$vals[],$types[])
+  AUTO $tag
+  AUTO posaux
+  AUTO pos00
+  AUTO pos01
+  AUTO pos02
+  AUTO pos03
+  AUTO recur
+  AUTO ardim
+  pos00=0
+  pars=0
+  CALL stapos($in[],"<methodCall>",pos00,pos01)
+  IF(pos00==0) THEN
+    TYPE "ERROR, we WAIT a methodCall message, and we receive oher stuff"
+    pars=-1
+    RETURN
+  END
+  CALL xrntv($in[],"methodName",pos01,pos03,$method)
+; 1) Search the NEXT <value> tag, in the range [pos03,pos00]
+; 2) serach the <tag> after <value>, in range [pos00,pos01]
+; 3.1) If this <tag> is </value>. then we get a string
+; 3.2) If this <tag> is <array>, the we have find where
+;      does it ends, and assign the vals "(pos,dim)"
+; 3.3) If <tag> is NOT <array> DO
+; 3.3.1) If <tag> is <struct> RETURN ERROR
+; 3.3.2) Else, set pos02=pos01 and search </tag> ins range [pos02,pos03]
+  DO
+    CALL stapos($in[],"<value>",pos03,pos00)
+    posaux = pos00
+    IF pos03 == 0 THEN
+     ; TYPE "NO MORE VALUES"
+      RETURN
+    END
+    CALL xrnt($in[],pos00,pos01,$tag)
+    ;TYPE "next tag after <value> "+$tag
+    ;TYPE "        in region      "+$UNPACK($in[],pos01-10,20)
+    IF (STRDIF($tag,"/value")==0) THEN ; we have string or nil
+      $types[pars]="string"
+    ;TYPE "We get /value, in fact $tag = "+$tag
+      $vals[pars] = $UNPACK($in[],posaux+1,pos00-posaux-1)
+      pos03 = pos01
+      ;get the VALUE in the middle
+    ELSE
+      $types[pars] =$tag
+      IF STRDIF($tag,"array") == 0 THEN;------ IF we get an array
+        ;TYPE "we get an array, in fact $tag = "+$tag
+        recur = 1
+        ardim = 1
+        $vals[pars]  =$ENCODE(/I0,pos01)
+        WHILE recur > 0 DO
+          ;TYPE "next tag after "+$tag+" is:"
+          CALL xrnt($in[],pos01,pos02,$tag)
+          ;TYPE "                          :"+$tag+"anr"
+          IF STRDIF($tag,"array") == 0 THEN
+            recur = recur + 1
+            ardim = ardim + 1
+          END
+          IF STRDIF($tag,"/array") == 0 THEN
+            recur = recur - 1
+          END
+          pos01 = pos02
+        END
+        pos03=pos02
+        $vals[pars]  =$vals[pars]+","+$ENCODE(/I0,ardim)
+      ELSE ;----------------------------------------------- IF no array
+        ;TYPE "processing tag = "+$tag
+        IF STRDIF($tag,"struct")==0 THEN
+          TYPE "STRUCT NOT SUPPORTED"
+          pars = -1
+          RETURN; struct not supported
+        END
+        pos02=pos01
+        CALL stapos($in[],"</"+$tag+">",pos02,pos03)
+        ;TYPE "        the NEXT next "+$UNPACK($in[],pos02,pos03-pos03)
+        ;TYPE "region after <value> "+$UNPACK($in[],pos02-10,20)
+        $vals[pars]  =$UNPACK($in[],pos01+1,pos02-pos01-1)
+      END
+    END
+    pars = pars + 1
+  UNTIL (STRDIF($tag,"/methodResponce") == 0) OR (STRDIF($tag,"/methodCall")==0)
+  TYPE "LAST tag is "+$tag
+.END
+
+.PROGRAM httpms($msg[],sd,sc)
+  AUTO $endline
+  AUTO REAL pos00
+  AUTO REAL pos01
+  AUTO REAL pos02
+  AUTO REAL ml
+  $endline = $CHR(13)+$CHR(10)
+  pos00=1
+  CALL stapos($msg[],"Content-Length:",pos00,pos01)
+  IF pos00 == 0 THEN
+    sd = 0
+    sc = 0
+  END
+  pos02=pos01 
+  CALL stapos($msg[],$endline,pos02,pos00)
+  sd=VAL($UNPACK($msg[],pos01+1,pos02-pos01-1))
+  pos00=1
+  CALL stapos($msg[],$endline+$endline,pos00,pos01)
+  CALL stalen($msg[],ml)
+  sc=ml-pos01
+
+.END
+
+
+.PROGRAM xrunarr1($msg[],$ainfo,$vals[],$types[],size)
+  AUTO REAL maxsize
+  AUTO REAL ic
+  AUTO REAL pos00
+  maxsize = size
+  pos00 = VAL($ainfo)
+;  TYPE $ENCODE(/I0,pos00)
+;  TYPE $UNPACK($msg[],pos00,5)
+  size=0
+  WHILE 1 DO
+    CALL xrnextvalue($msg[],pos00,$vals[size],$types[size],pos01)
+    IF (STRDIF($types[size],"") == 0) OR (size == maxsize ) THEN
+      EXIT
+    END
+    pos00 = pos01
+    size = size + 1
+  END
+.END
+
+
+.PROGRAM xrnextvalue($in[],posini,$val,$type,pos01)
+  AUTO REAL pos00
+  AUTO REAL posaux
+  AUTO $tag
+  pos00 = posini
+
+  DO; search for next <value>
+    CALL xrnt($in[],pos00,pos01,$tag)
+    pos00 = pos01
+    IF STRDIF($tag,"/array")==0 THEN
+      $val  = ""
+      $type = ""
+      RETURN
+    END
+  UNTIL STRDIF($tag,"value") == 0
+
+  pos00 = pos01
+  posaux = pos01
+
+  CALL xrnt($in[],pos00,pos01,$tag)
+
+  IF (STRDIF($tag,"/value")==0) THEN 
+    $type="string"
+    $val = $UNPACK($in[],posaux+1,pos00-posaux-1)
+    RETURN
+  END
+  posaux = pos01
+  pos00 = pos01
+  IF (STRDIF($tag,"i4")==0) OR (STRDIF($tag,"int")==0) THEN 
+    CALL xrnt($in[],pos00,pos01,$tag)
+    $type="int"
+    $val = $UNPACK($in[],posaux+1,pos00-posaux-1)
+    RETURN
+  END
+  $type=$tag
+  CALL xrnt($in[],pos00,pos01,$tag)
+  $val = $UNPACK($in[],posaux+1,pos00-posaux-1)
+    
+.END
+
+
+.PROGRAM url2vpluscli($url,$ip,port)
+
+  AUTO REAL ic0
+  AUTO REAL ic1
+  $ip = $url
+  IF STRDIF($MID($url,1,7),"http://") == 0 THEN
+    $ip=$MID($url,8,LEN($url)-7)
+  ELSE
+	  IF STRDIF($MID($url,1,9),"rosrpc://") == 0 THEN
+	    $ip=$MID($url,10,LEN($url)-9)
+	  END
+  END
+
+  IF STRDIF($MID($ip,1,9),"san-lucas") == 0 THEN
+    PACK $ip,1,31 = "10.10.238.2"+$MID($ip,10,20)
+  END
+
+  ic1 = 1 
+  FOR ic0 = 1 TO 3
+    ic1 = POS($ip,".",ic1)
+    PACK $ip,ic1,1 = " "
+  END
+
+  ic1=POS($ip,":")
+  IF ic1 == 0 THEN
+    RETURN
+  END
+
+  port = VAL($MID($ip,ic1+1,10))
+  
+  $ip= $MID($ip,1,ic1-1)
+  
+.END
+
+
+.PROGRAM v2cliip2num($ip,num)
+  
+  AUTO REAL ic
+  num = VAL($ip)*1.6777216E+07
+  ic = POS($ip," ",1)
+  num = num + VAL($MID($ip,ic+1,4))*65536
+  ic = POS($ip," ",ic+1)
+  num = num + VAL($MID($ip,ic+1,4))*256
+  ic = POS($ip," ",ic+1)
+  num = num + VAL($MID($ip,ic+1,4))
+.END
+
+.PROGRAM v2cliip2array($ip,num[])
+  
+  AUTO REAL ic
+  num[0] = INT(VAL($ip))
+  ic = POS($ip," ",1)
+  num[1] = INT(VAL($MID($ip,ic+1,4)))
+  ic = POS($ip," ",ic+1)
+  num[2] = INT(VAL($MID($ip,ic+1,4)))
+  ic = POS($ip," ",ic+1)
+  num[3] = INT(VAL($MID($ip,ic+1,4)))
+.END
+
+.PROGRAM v2cliparr_cmp($ip,num[],res)
+  
+  AUTO REAL ic
+  res= FALSE
+  IF num[0] <> INT(VAL($ip)) THEN
+    RETURN
+  END
+  ic = POS($ip," ",1)
+  IF num[1] <> INT(VAL($MID($ip,ic+1,4))) THEN
+    RETURN
+  END
+  ic = POS($ip," ",ic+1)
+  IF num[2] <> INT(VAL($MID($ip,ic+1,4))) THEN
+    RETURN
+  END
+  ic = POS($ip," ",ic+1)
+  IF num[3] <> INT(VAL($MID($ip,ic+1,4))) THEN
+    RETURN
+  END
+  res =TRUE
+.END

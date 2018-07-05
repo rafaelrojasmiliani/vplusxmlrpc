@@ -1,0 +1,171 @@
+
+.PROGRAM ubz.soc()
+.END
+
+.PROGRAM soc.cli(lun,$label,$ip,$port)
+;  This create a client socket to $ip,$port
+;  and stores it in lun
+	AUTO status
+	ATTACH (lun,4) "TCP"
+	status = IOSTAT(lun)
+	IF status < 0 THEN
+	  TYPE "[soc.cli "+$label+" "+$ip+" "+$port+"] Error in Attach: ", $ERROR(status)
+	  lun=0
+	  RETURN
+	END
+	;associate the lun with a node label with ip
+	FSET(lun) "/NODE '"+$label+"' /ADDRESS "+$ip
+	status = IOSTAT(lun)
+	
+	IF status < 0 THEN
+	  TYPE "[soc.cli "+$label+" "+$ip+" "+$port+"] Error in FSET:: ", $ERROR(status)
+    DETACH(lun)
+	  lun=0
+	  RETURN
+	END
+	; open the lun, connects to remote listening socket
+	FOPEN (lun, 0) $label+" /REMOTE_PORT "+$port+" /BUFFER_SIZE 1024"
+	status = IOSTAT(lun)
+	
+	IF status < 0 THEN
+	  TYPE "[soc.cli "+$label+" "+$ip+" "+$port+"] Error in FOPEN: ", $ERROR(status)
+	  IF status == -513 THEN
+	    TYPE "probably server is down"
+	  END
+    DETACH(lun)
+	  lun=0
+	  RETURN
+	END
+.END
+
+.PROGRAM soc.srv(lun,$port,$cn)
+;  This create a client socket to $ip,$port
+;  and stores it in lun
+	AUTO status
+	ATTACH (lun,4) "TCP"
+	status = IOSTAT(lun)
+	IF status < 0 THEN
+	  TYPE "Error in Attach: ", $ERROR(status)
+	  lun=0
+	  RETURN
+	END
+
+  FOPEN (lun, 16) "/LOCAL_PORT "+$port+" /CLIENTS "+$cn+" /BUFFER_SIZE 1024"
+  status = IOSTAT(lun)
+  IF status < 0 THEN
+    TYPE "Error from FOPEN: ", $ERROR(status)
+    lun = 0
+    RETURN
+  END
+.END
+
+.PROGRAM readarray(lun,$sa[],stat)
+  CALL stai($sa[])              
+  READ(lun,1) $sa[0],$sa[1],$sa[2],$sa[3],$sa[4],$sa[5],$sa[6],$sa[7],$sa[8],$sa[9],$sa[10],$sa[11],$sa[12],$sa[13],$sa[14]
+  stat=IOSTAT(lun)
+.END
+
+.PROGRAM read2array(lun,handle,$sa[],stat)
+  CALL stai($sa[])              
+  READ(lun,handle,0) $sa[0],$sa[1],$sa[2],$sa[3],$sa[4],$sa[5],$sa[6],$sa[7],$sa[8],$sa[9],$sa[10],$sa[11],$sa[12],$sa[13],$sa[14]
+  stat=IOSTAT(lun)
+.END
+
+.PROGRAM read3array(lun,handle,$sa[],stat)
+  CALL stai($sa[])              
+  READ(lun,handle,1) $sa[0],$sa[1],$sa[2],$sa[3],$sa[4],$sa[5],$sa[6],$sa[7],$sa[8],$sa[9],$sa[10],$sa[11],$sa[12],$sa[13],$sa[14]
+  stat=IOSTAT(lun)
+.END
+
+.PROGRAM read4array(lun,$sa[],stat)
+  CALL stai($sa[])              
+  READ(lun,1) $sa[0],$sa[1],$sa[2],$sa[3],$sa[4],$sa[5],$sa[6],$sa[7],$sa[8],$sa[9],$sa[10],$sa[11],$sa[12],$sa[13],$sa[14]
+  WAIT.EVENT 0, 1
+  stat=IOSTAT(lun)
+.END
+
+.PROGRAM read5array(lun,$sa[],stat)
+  CALL stai($sa[])              
+  READ(lun,1) $sa[0],$sa[1],$sa[2],$sa[3],$sa[4],$sa[5],$sa[6],$sa[7],$sa[8],$sa[9],$sa[10],$sa[11],$sa[12],$sa[13],$sa[14]
+  stat=IOSTAT(lun)
+.END
+
+.PROGRAM read1024sep(lun,$s0,$s1,$s2,$s3,$s4,$s5,$s6,$s7)
+  CALL stai($sa[])              
+  READ(lun,1) $s0,$s1,$s2,$s3,$s4,$s5,$s6,$s7
+.END
+
+
+.PROGRAM writearray(lun,$ar[])
+  AUTO  REAL ml
+  CALL stalen2($ar[],ml)
+  CASE ml OF
+    VALUE  1:
+      WRITE(lun) $ar[0],/S
+    VALUE  2:
+      WRITE(lun) $ar[0],$ar[1],/S
+    VALUE  3:
+      WRITE(lun) $ar[0],$ar[1],$ar[2],/S
+    VALUE  4:
+      WRITE(lun) $ar[0],$ar[1],$ar[2],$ar[3],/S
+    VALUE  5:
+      WRITE(lun) $ar[0],$ar[1],$ar[2],$ar[3],$ar[4],/S
+    VALUE  6:
+      WRITE(lun) $ar[0],$ar[1],$ar[2],$ar[3],$ar[4],$ar[5],/S
+    VALUE  7:
+      WRITE(lun) $ar[0],$ar[1],$ar[2],$ar[3],$ar[4],$ar[5],$ar[6],/S
+    VALUE  8:
+      WRITE(lun) $ar[0],$ar[1],$ar[2],$ar[3],$ar[4],$ar[5],$ar[6],$ar[7],/S
+    VALUE  9:
+      WRITE(lun) $ar[0],$ar[1],$ar[2],$ar[3],$ar[4],$ar[5],$ar[6],$ar[7],$ar[8],/S
+    VALUE 10:
+      WRITE(lun) $ar[0],$ar[1],$ar[2],$ar[3],$ar[4],$ar[5],$ar[6],$ar[7],$ar[8],$ar[9],/S
+    VALUE 11:
+      WRITE(lun) $ar[0],$ar[1],$ar[2],$ar[3],$ar[4],$ar[5],$ar[6],$ar[7],$ar[8],$ar[9],$ar[10],/S
+    VALUE 12:
+      WRITE(lun) $ar[0],$ar[1],$ar[2],$ar[3],$ar[4],$ar[5],$ar[6],$ar[7],$ar[8],$ar[9],$ar[10],$ar[11],/S
+    VALUE 13:
+      WRITE(lun) $ar[0],$ar[1],$ar[2],$ar[3],$ar[4],$ar[5],$ar[6],$ar[7],$ar[8],$ar[9],$ar[10],$ar[11],$ar[12],/S
+    VALUE 14:
+      WRITE(lun) $ar[0],$ar[1],$ar[2],$ar[3],$ar[4],$ar[5],$ar[6],$ar[7],$ar[8],$ar[9],$ar[10],$ar[11],$ar[12],$ar[13],/S
+    VALUE 15:
+      WRITE(lun) $ar[0],$ar[1],$ar[2],$ar[3],$ar[4],$ar[5],$ar[6],$ar[7],$ar[8],$ar[9],$ar[10],$ar[11],$ar[12],$ar[13],$ar[14],/S
+  END
+.END
+
+.PROGRAM write2array(lun,handle,$ar[])
+  AUTO  REAL ml
+  CALL stalen2($ar[],ml)
+  CASE ml OF
+    VALUE  1:
+      WRITE(lun,handle) $ar[0],/S
+    VALUE  2:
+      WRITE(lun,handle) $ar[0],$ar[1],/S
+    VALUE  3:
+      WRITE(lun,handle) $ar[0],$ar[1],$ar[2],/S
+    VALUE  4:
+      WRITE(lun,handle) $ar[0],$ar[1],$ar[2],$ar[3],/S
+    VALUE  5:
+      WRITE(lun,handle) $ar[0],$ar[1],$ar[2],$ar[3],$ar[4],/S
+    VALUE  6:
+      WRITE(lun,handle) $ar[0],$ar[1],$ar[2],$ar[3],$ar[4],$ar[5],/S
+    VALUE  7:
+      WRITE(lun,handle) $ar[0],$ar[1],$ar[2],$ar[3],$ar[4],$ar[5],$ar[6],/S
+    VALUE  8:
+      WRITE(lun,handle) $ar[0],$ar[1],$ar[2],$ar[3],$ar[4],$ar[5],$ar[6],$ar[7],/S
+    VALUE  9:
+      WRITE(lun,handle) $ar[0],$ar[1],$ar[2],$ar[3],$ar[4],$ar[5],$ar[6],$ar[7],$ar[8],/S
+    VALUE 10:
+      WRITE(lun,handle) $ar[0],$ar[1],$ar[2],$ar[3],$ar[4],$ar[5],$ar[6],$ar[7],$ar[8],$ar[9],/S
+    VALUE 11:
+      WRITE(lun,handle) $ar[0],$ar[1],$ar[2],$ar[3],$ar[4],$ar[5],$ar[6],$ar[7],$ar[8],$ar[9],$ar[10],/S
+    VALUE 12:
+      WRITE(lun,handle) $ar[0],$ar[1],$ar[2],$ar[3],$ar[4],$ar[5],$ar[6],$ar[7],$ar[8],$ar[9],$ar[10],$ar[11],/S
+    VALUE 13:
+      WRITE(lun,handle) $ar[0],$ar[1],$ar[2],$ar[3],$ar[4],$ar[5],$ar[6],$ar[7],$ar[8],$ar[9],$ar[10],$ar[11],$ar[12],/S
+    VALUE 14:
+      WRITE(lun,handle) $ar[0],$ar[1],$ar[2],$ar[3],$ar[4],$ar[5],$ar[6],$ar[7],$ar[8],$ar[9],$ar[10],$ar[11],$ar[12],$ar[13],/S
+    VALUE 15:
+      WRITE(lun,handle) $ar[0],$ar[1],$ar[2],$ar[3],$ar[4],$ar[5],$ar[6],$ar[7],$ar[8],$ar[9],$ar[10],$ar[11],$ar[12],$ar[13],$ar[14],/S
+  END
+.END
