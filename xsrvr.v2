@@ -1,0 +1,132 @@
+.PROGRAM ubz.xrpcsrvr()
+  GLOBAL $rn.nodeid
+  GLOBAL $rn.masterip
+  GLOBAL $rn.masterport
+  GLOBAL $rn.nodeip
+  GLOBAL $rn.nodeport
+  GLOBAL $rn.nodeurl
+  GLOBAL $rn.namespace
+
+  $rn.nodeid = "/ubz/smf/adeptCobra"
+  $rn.masterip = "10 10 238 2"
+  $rn.masterport = "11311"
+
+  $rn.nodeip  = "10 10 238 33"
+  $rn.nodeport  = "5000"
+  $rn.nodeurl = "http://10.10.238.33:5000"
+
+  $rn.namespace = "/ubz/smf/adeptCobra/"
+
+  CALL xrpc.srvr()
+.END
+
+
+.PROGRAM xrpc.srvr()
+  LOCAL $bf00[]
+  LOCAL $msg[]
+  LOCAL $mth.def[]
+  LOCAL $types[]
+  LOCAL $vals[]
+  AUTO $mth.str
+  AUTO REAL handle
+  AUTO REAL stat
+  AUTO REAL mth.id
+  AUTO REAL meth.id
+  AUTO REAL mth.def.len
+  AUTO REAL msg.delen
+  AUTO REAL msg.len
+
+  stat= 0
+  handle = 0
+  CALL stai($bf00[])
+  CALL stai($msg[])
+  CALL stai($mth.def[])
+
+  ; -----------------------
+  ;     Define here the name of the calls
+  ; -----------------------------------
+  $mth.def[0]="testCall"
+  $mth.def[1]="requestTopic"
+  $mth.def[2]="publisherUpdate"
+  $mth.def[3]="shutdown"
+  $mth.def[4]="getSubscriptions"
+  $mth.def[5]="getPublications"
+  $mth.def[6]="getPid"
+  mth.def.len = 7
+  CALL soc.srv(soc,"5000","1")
+
+  IF soc==0 THEN
+    TYPE "ERROR OPENING SOCKET"
+    RETURN
+  END
+
+
+  WHILE 1 DO
+    CALL read2array(soc,handle,$bf00[],stat) 
+    CASE stat OF
+      VALUE 100:
+        ;TYPE "new connection"
+      VALUE 1:
+	      CALL stai($msg[])
+        CALL staasa($msg[],$bf00[])
+        CALL httpms($msg[],msg.delen,msg.len)
+        WHILE msg.len < msg.delen DO
+          CALL read2array(soc,handle,$bf00[],stat)
+          CALL staasa($msg[],$bf00[])
+          CALL httpms($msg[],msg.delen,msg.len)
+        END
+        CALL xrpc($msg[],$mth.str,pars,$vals[],$types[])
+;        FOR m=1 TO pars
+;          TYPE "paramenter TYPE = "+$types[m-1]
+;          TYPE "paramenter value = "+$vals[m-1]
+;        END
+		    meth.id=0
+		    DO
+		     m=STRDIF($mth.str,$mth.def[meth.id])
+		     meth.id = meth.id + 1
+		    UNTIL (m==0) OR (meth.id==mth.def.len)
+		
+;-------------------------------
+; write here inside the CASE statement
+; the functions that will be called
+; after each XMLRPC call
+		    CASE (meth.id-1) OF
+		      VALUE 0: 
+		        CALL testresp(pars,$vals[],$types[],$msg[])
+		      ANY
+		        TYPE "XMLRPC server: xmlrpc CALL not implemented"
+		        ; RETURN ERROR
+		    END
+        CALL write2array(soc,handle,$msg[])
+        ;close connection.
+        FCMND (soc, 600) $INTB(handle) ;Deallocates handle
+        stat = IOSTAT(soc)
+        ;Check STATUS OF FCMND
+        IF stat <0 THEN
+          TYPE "Error from FCMND:", $ERROR(STATUS)
+          RETURN
+        END
+        handle=0
+      VALUE 101:
+        TYPE "connection closed Handle =", handle
+
+      ANY
+        TYPE "ERROR"
+    END
+
+  END
+  
+.END
+
+;---------------------------------------
+; HERE you can find examples OF implemented calls
+
+
+.PROGRAM testresp(args,$vals[],$types[],$output[])
+  TYPE "processing testCall"
+  CALL stai($output[]) 
+  $types[0]="string"
+  $vals[0]="Command Received"
+  CALL xrresp(3,$vals[],$types[],$output[])
+.END
+
