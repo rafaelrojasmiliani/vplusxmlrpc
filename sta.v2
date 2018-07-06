@@ -1,0 +1,208 @@
+.PROGRAM ubz.sta()
+.END
+
+.PROGRAM staas($des[],$src)
+  AUTO icarr
+  AUTO ailen.des
+  AUTO ailen.src
+  icarr=0
+  ailen.des = LEN($des[icarr])
+  WHILE ailen.des == 128  DO
+      icarr = icarr + 1
+      ailen.des = LEN($des[icarr])
+  END
+  ailen.src=LEN($src)
+
+  PACK $des[icarr],ailen.des+1,ailen.src = $src
+
+.END
+
+.PROGRAM staasa($des[],$src[])
+	AUTO aic.src
+  AUTO ailen.src
+  aic.src=0
+  DO
+    CALL staas($des[],$src[aic.src])
+	  ailen.src = LEN($src[aic.src])
+    aic.src=aic.src + 1
+  UNTIL ailen.src < 128
+.END
+
+.PROGRAM stalen($src[],res)
+	AUTO l
+	AUTO icarr
+	icarr=0
+	l=0
+  res=0
+
+  DO
+    l=LEN($src[icarr])
+    res = res + l
+    icarr = icarr + 1
+  UNTIL (l<128)
+
+.END
+
+.PROGRAM stalen2($src[],res)
+	AUTO l
+	AUTO icarr
+	icarr=0
+	l=0
+  res=0
+  DO
+    l=LEN($src[icarr])
+    res = res + 1
+    icarr = icarr + 1
+  UNTIL (l<128) OR (icarr == 14)
+
+  res = res 
+.END
+
+
+.PROGRAM stai($str[])
+  AUTO ici
+  FOR ici=0 TO 14
+    $str[ici]=""
+  END
+.END
+
+.PROGRAM st2i($str[])
+  AUTO ici
+  AUTO icj
+  FOR ici=0 TO 14
+    FOR icj=0 TO 14
+      $str[ici,icj]=""
+    END
+  END
+.END
+
+.PROGRAM stapos($in[],$str,ini,fin)
+; find a string in an array OF strings.
+  AUTO REAL aic.arr
+  AUTO REAL arr.ini
+  AUTO REAL aic.str.ini
+  AUTO REAL aic.str
+  AUTO REAL aui.len
+  AUTO REAL str.len
+  AUTO REAL aic.match
+  aic.match = 0
+
+  str.len=LEN($str)
+  aic.str.ini=ini MOD 128
+  FOR aic.arr = INT(ini/128) TO 14 
+    aui.len=LEN($in[aic.arr])
+    FOR aic.str = aic.str.ini TO aui.len
+      IF(ASC($MID($in[aic.arr],aic.str,1))==ASC($MID($str,aic.match+1,1))) THEN
+        aic.match=aic.match+1
+        IF(aic.match == str.len) THEN
+          fin=aic.arr*128+aic.str
+          ini=fin-str.len+1
+          RETURN
+        END
+      ELSE
+        aic.match=0
+      END
+    END ; FOR aic.str in the string.
+    IF aui.len < 128 THEN
+      ini = 0
+      fin = 0
+      RETURN
+    END
+    aic.str.ini=1
+  END; FOR aic.arr in the array
+  ini = 0
+  fin = 0
+.END
+
+.PROGRAM stalen3($s0,$s1,$s2,$s3,$s4,$s5,$s6,$s7,res)
+  res = LEN($s0) 
+  IF res < 128 THEN
+    RETURN
+  END
+  res = res + LEN($s1) 
+  IF res < 256 THEN
+    RETURN
+  END
+  res = res + LEN($s2) 
+  IF res < 384  THEN
+    RETURN
+  END
+  res = res + LEN($s3) 
+  IF res < 521 THEN
+    RETURN
+  END
+  res = res + LEN($s4) 
+  IF res < 640 THEN
+    RETURN
+  END
+  res = res + LEN($s5) 
+  IF res < 768 THEN
+    RETURN
+  END
+  res = res + LEN($s6) 
+  IF res < 896 THEN
+    RETURN
+  END
+  res = res + LEN($s7) 
+.END
+
+
+.PROGRAM staapp3subs(pos00,$in[],$s0,$s1,$s2,$s3,$s4,$s5,$s6,$s7)
+  AUTO REAL len2
+
+  CALL stalen3($s0,$s1,$s2,$s3,$s4,$s5,$s6,$s7,inlen)
+
+  len2 = LEN($s0)
+  PACK $in[],pos00,len2 = $src
+  pos00 = pos00 + len2
+  IF len2 < 128 THEN
+    RETURN
+  END
+
+  len2 = LEN($s1)
+  PACK $in[],pos00,len2 = $src
+  pos00 = pos00 + len2
+  IF len2 < 128 THEN
+    RETURN
+  END
+
+  len2 = LEN($s2)
+  PACK $in[],pos00,len2 = $src
+  pos00 = pos00 + len2
+  IF len2 < 128 THEN
+    RETURN
+  END
+
+  len2 = LEN($s3)
+  PACK $in[],pos00,len2 = $src
+  pos00 = pos00 + len2
+  IF len2 < 128 THEN
+    RETURN
+  END
+
+  len2 = LEN($s4)
+  PACK $in[],pos00,len2 = $src
+  pos00 = pos00 + len2
+  IF len2 < 128 THEN
+    RETURN
+  END
+
+  len2 = LEN($s5)
+  PACK $in[],pos00,len2 = $src
+  pos00 = pos00 + len2
+  IF len2 < 128 THEN
+    RETURN
+  END
+
+  len2 = LEN($s6)
+  PACK $in[],pos00,len2 = $src
+  pos00 = pos00 + len2
+  IF len2 < 128 THEN
+    RETURN
+  END
+
+  len2 = LEN($s7)
+  PACK $in[],pos00,len2 = $src
+  pos00 = pos00 + len2
+
+.END
