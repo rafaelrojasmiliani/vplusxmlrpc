@@ -3,16 +3,27 @@
 .END
 
 .PROGRAM soc.cli(lun,$label,$ip,$port)
-;  This create a client socket to $ip,$port
-;  and stores it in lun
-	AUTO status
+;  Creates a client socket to $ip,$port and stores it in lun
+;  ARGUMENTS:
+;  ---------
+;    lun:    (INT)    reference TO the answer lun
+;    $label: (STRING) label TO the port
+;    $ip:    (STRING) Remote server ip
+;    $port:  (STRING) Remote server port
+;  RETURNS:
+;  -------
+;    lun: a connected tcp socket
+
+	AUTO status   ; aux var for error handling
 	ATTACH (lun,4) "TCP"
+
 	status = IOSTAT(lun)
 	IF status < 0 THEN
 	  TYPE "[soc.cli "+$label+" "+$ip+" "+$port+"] Error in Attach: ", $ERROR(status)
 	  lun=0
 	  RETURN
 	END
+
 	;associate the lun with a node label with ip
 	FSET(lun) "/NODE '"+$label+"' /ADDRESS "+$ip
 	status = IOSTAT(lun)
@@ -39,8 +50,16 @@
 .END
 
 .PROGRAM soc.srv(lun,$port,$cn)
-;  This create a client socket to $ip,$port
-;  and stores it in lun
+;  Creates a server socket to listening on $port capable
+;  OF supporting $cn clients and stores it in lun
+;  ARGUMENTS:
+;  ---------
+;    lun:    (INT)    reference TO the answer lun
+;    $port:  (STRING) Remote server port
+;    $cn  :  (STRING) number of clients TO support
+;  RETURNS:
+;  -------
+;    lun: a connected tcp socket
 	AUTO status
 	ATTACH (lun,4) "TCP"
 	status = IOSTAT(lun)
@@ -73,7 +92,7 @@
 
 .PROGRAM read3array(lun,handle,$sa[],stat)
   CALL stai($sa[])              
-  READ(lun,handle,1) $sa[0],$sa[1],$sa[2],$sa[3],$sa[4],$sa[5],$sa[6],$sa[7],$sa[8],$sa[9],$sa[10],$sa[11],$sa[12],$sa[13],$sa[14]
+  READ(lun,handle,0) $sa[0],$sa[1],$sa[2],$sa[3],$sa[4],$sa[5],$sa[6],$sa[7],$sa[8],$sa[9],$sa[10],$sa[11],$sa[12],$sa[13],$sa[14]
   stat=IOSTAT(lun)
 .END
 
@@ -85,6 +104,7 @@
 .END
 
 .PROGRAM read5array(lun,$sa[],stat)
+; READ a maximum of 1625 Bytes
   CALL stai($sa[])              
   READ(lun,1) $sa[0],$sa[1],$sa[2],$sa[3],$sa[4],$sa[5],$sa[6],$sa[7],$sa[8],$sa[9],$sa[10],$sa[11],$sa[12],$sa[13],$sa[14]
   stat=IOSTAT(lun)
