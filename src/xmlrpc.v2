@@ -60,7 +60,7 @@
   
 .END
 
-.PROGRAM xmlrpc.cresp(argn,$vals[],$types[],$output[])
+.PROGRAM xmlrpc.gen.res(argn,$vals[],$types[],$output[])
 ; Generates an XMLRPC responce and store in in $output[]
 ; ARGUMENTS:
 ; ---------
@@ -311,7 +311,7 @@
   TYPE "LAST tag is "+$tag
 .END
 
-.PROGRAM xrpc($in[],$method,pars,$vals[],$types[])
+.PROGRAM xmlrpc.call.get($in[],$method,pars,$vals[],$types[])
 ; Processes an XMLRPC and returns the name OF the
 ; method the number OF arguments and two string
 ; arrays with the respective values and types.

@@ -3,7 +3,7 @@
 .END
 
 
-.PROGRAM xmlrpc.srvr()
+.PROGRAM xmlrpc.srvr($port,$methods[],methods.num)
   LOCAL $bf00[]
   LOCAL $msg[]
   LOCAL $mth.def[]
@@ -30,7 +30,7 @@
   $mth.def[0]="assemblyCall"
   $mth.def[1]="isAvailable"
   mth.def.len = 7
-  CALL soc.srv(soc,"5000","1")
+  CALL soc.srv(soc,$port,"1")
 
   IF soc==0 THEN
     TYPE "ERROR OPENING SOCKET"
@@ -41,41 +41,38 @@
   WHILE 1 DO
     CALL read3array(soc,handle,$bf00[],stat) 
     CASE stat OF
-      VALUE 100:
-        ;TYPE "new connection"
+      VALUE 100:; state OF the socket after a new connection
       VALUE 1:
-	      CALL stai($msg[])
+        ; state OF the socket faster data received
+	      CALL stai($msg[]); init msg buffer
+        ;copy received data TO msg
         CALL staasa($msg[],$bf00[])
+        ;compute xmlrpc size
         CALL httpms($msg[],msg.delen,msg.len)
         WHILE msg.len < msg.delen DO
           CALL read2array(soc,handle,$bf00[],stat)
           CALL staasa($msg[],$bf00[])
           CALL httpms($msg[],msg.delen,msg.len)
         END
-        CALL xrpc($msg[],$mth.str,pars,$vals[],$types[])
+        CALL xmlrpc.call.get($msg[],$mth.str,pars,$vals[],$types[])
 ;        FOR m=1 TO pars
 ;          TYPE "paramenter TYPE = "+$types[m-1]
 ;          TYPE "paramenter value = "+$vals[m-1]
 ;        END
 		    meth.id=0
 		    DO
-		     m=STRDIF($mth.str,$mth.def[meth.id])
+		     IF(STRDIF($mth.str,$methods[meth.id])==0) THEN 
+          EXIT
+         END
 		     meth.id = meth.id + 1
-		    UNTIL (m==0) OR (meth.id==mth.def.len)
-		
-;-------------------------------
-; write here inside the CASE statement
-; the functions that will be called
-; after each XMLRPC call
-		    CASE (meth.id-1) OF
-		      VALUE 0: 
-		        CALL testresp(pars,$vals[],$types[],$msg[])
-		      VALUE 1: 
-		        CALL isaval(pars,$vals[],$types[],$msg[])
-		      ANY
-		        TYPE "XMLRPC server: xmlrpc CALL not implemented"
-		        ; RETURN ERROR
-		    END
+		    UNTIL (meth.id==methods.num)
+
+        IF (meth.id==methods.num) THEN
+          TYPE "Error, method can't be found"
+        ELSE
+          CALLS $mth.str(n,$vals[],$types[],$rvals[],$rtypes[],argn)
+          CALL xmlrpc.gen.res(argn,$rvals[],$rtypes,$resbuff)
+        END
         CALL write2array(soc,handle,$msg[])
         ;close connection.
         FCMND (soc, 600) $INTB(handle) ;Deallocates handle
@@ -86,7 +83,7 @@
           RETURN
         END
         handle=0
-      VALUE 101:
+      VALUE 101:; state OF the socket after a handle is closed
         TYPE "connection closed Handle =", handle
       ANY
         TYPE "ERROR int xmlrpc.srvr()"
