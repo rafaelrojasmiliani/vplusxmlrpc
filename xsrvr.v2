@@ -1,27 +1,9 @@
-.PROGRAM ubz.xrpcsrvr()
-  GLOBAL $rn.nodeid
-  GLOBAL $rn.masterip
-  GLOBAL $rn.masterport
-  GLOBAL $rn.nodeip
-  GLOBAL $rn.nodeport
-  GLOBAL $rn.nodeurl
-  GLOBAL $rn.namespace
-
-  $rn.nodeid = "/ubz/smf/adeptCobra"
-  $rn.masterip = "10 10 238 2"
-  $rn.masterport = "11311"
-
-  $rn.nodeip  = "10 10 238 33"
-  $rn.nodeport  = "5000"
-  $rn.nodeurl = "http://10.10.238.33:5000"
-
-  $rn.namespace = "/ubz/smf/adeptCobra/"
-
+.PROGRAM ubz.xrpcsrvr($port)
   CALL xrpc.srvr()
 .END
 
 
-.PROGRAM xrpc.srvr()
+.PROGRAM xmlrpc.srvr()
   LOCAL $bf00[]
   LOCAL $msg[]
   LOCAL $mth.def[]
@@ -45,13 +27,8 @@
   ; -----------------------
   ;     Define here the name of the calls
   ; -----------------------------------
-  $mth.def[0]="testCall"
-  $mth.def[1]="requestTopic"
-  $mth.def[2]="publisherUpdate"
-  $mth.def[3]="shutdown"
-  $mth.def[4]="getSubscriptions"
-  $mth.def[5]="getPublications"
-  $mth.def[6]="getPid"
+  $mth.def[0]="assemblyCall"
+  $mth.def[1]="isAvailable"
   mth.def.len = 7
   CALL soc.srv(soc,"5000","1")
 
@@ -62,7 +39,7 @@
 
 
   WHILE 1 DO
-    CALL read2array(soc,handle,$bf00[],stat) 
+    CALL read3array(soc,handle,$bf00[],stat) 
     CASE stat OF
       VALUE 100:
         ;TYPE "new connection"
@@ -93,6 +70,8 @@
 		    CASE (meth.id-1) OF
 		      VALUE 0: 
 		        CALL testresp(pars,$vals[],$types[],$msg[])
+		      VALUE 1: 
+		        CALL isaval(pars,$vals[],$types[],$msg[])
 		      ANY
 		        TYPE "XMLRPC server: xmlrpc CALL not implemented"
 		        ; RETURN ERROR
@@ -109,9 +88,10 @@
         handle=0
       VALUE 101:
         TYPE "connection closed Handle =", handle
-
       ANY
-        TYPE "ERROR"
+        TYPE "ERROR int xmlrpc.srvr()"
+        TYPE "Value OF stat not handled stat=",stat
+
     END
 
   END
@@ -123,10 +103,23 @@
 
 
 .PROGRAM testresp(args,$vals[],$types[],$output[])
+  AUTO REAL i
   TYPE "processing testCall"
   CALL stai($output[]) 
-  $types[0]="string"
-  $vals[0]="Command Received"
-  CALL xrresp(3,$vals[],$types[],$output[])
+  TYPE "argument number", args
+  FOR i=0 TO args-1
+    TYPE "val", $vals[i]
+    TYPE "type", $types[i]
+  END
+  $types[0]="boolean"
+  $vals[0]="1"
+  CALL xrresp(1,$vals[],$types[],$output[])
 .END
 
+.PROGRAM isaval(args,$vals[],$types[],$output[])
+  TYPE "processing testCall"
+  CALL stai($output[]) 
+  $types[0]="boolean"
+  $vals[0]="1"
+  CALL xrresp(1,$vals[],$types[],$output[])
+.END

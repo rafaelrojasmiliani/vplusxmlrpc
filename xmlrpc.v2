@@ -1,6 +1,20 @@
 .PROGRAM ubz.xmlrpc()
 .END
-.PROGRAM xrcall($name,argn,$args[],$types[],$output[])
+.PROGRAM xmlrpc.ccall($name,argn,$args[],$types[],$output[])
+; Description:
+;   xmlrpc.create.call
+;   Produce an XMLRPC call and write it in the
+;   array $output
+;
+; ARGUMENTS:
+; ---------
+;   $name:  string, name OF the xmlrpc CALL
+;   argn:  uint, number OF arguments OF the CALL
+;   $args[]: string array with the values OF the arguments (in string)
+;   $types[]; string array with the types OF the arguments
+; RETURNS:
+; -------
+;   $output[] a string array containing the XMLRPC
 	LOCAL $auxstr[]
   AUTO $endline
   AUTO $newline
@@ -46,7 +60,16 @@
   
 .END
 
-.PROGRAM xrresp(argn,$vals[],$types[],$output[])
+.PROGRAM xmlrpc.cresp(argn,$vals[],$types[],$output[])
+; Generates an XMLRPC responce and store in in $output[]
+; ARGUMENTS:
+; ---------
+;     argn: uint, number OF arguments
+;     $vals[]: string array with the values
+;     $types[]: string array with the types OF the values
+; RETURNS:
+; -------
+;     $output[], string array with the XMLRPC responce.
 	LOCAL $auxstr[]
   AUTO $endline
   AUTO $newline
@@ -85,6 +108,11 @@
 	  END
 	  CALL staas($auxstr[],"</data></array>")
   END
+  IF argn == 1 THEN
+    CALL staas($auxstr[],"<"+$types[0]+">")
+    CALL staas($auxstr[],$vals[0])
+    CALL staas($auxstr[],"</"+$types[0]+">")
+  END
 
   CALL staas($auxstr[],"</param></params></methodResponce>")
 
@@ -99,7 +127,14 @@
 
 
 .PROGRAM xrntv($in[],$tag,ini,fin,$info)
-; get the value of the next tag from ini
+; Get the value of the next tag  (text between < and >) from ini.
+; ARGUMENTS:
+; ---------
+;     $in[], string array with the text with tags
+;     ini, uint, position where start TO search.
+; RETURN:
+; ------
+;     $
   AUTO info.ini
   AUTO info.fin
   AUTO aic.ini
@@ -139,8 +174,19 @@
 .END
 
 .PROGRAM xrnt($in[],ini,fin,$tag)
-; get the NEXT ttag in the array $in from position ini
-; and returns the tag and the position OF its final char.
+; get the next tag in the array $in from position ini
+; and returns the tag and the position of its final char.
+; ARGUMENTS:
+; ---------
+;      $in[]: string array, text with tags
+;       ini:  uint, position where start TO search the tag
+; RETURNS:
+; -------
+;      ini: position where the tag is found, zero if no tag is
+;           present
+;      fin: position where the tag ends
+;      $tag:  tag found
+;
   AUTO info.ini
   AUTO info.fin
 
@@ -158,6 +204,21 @@
 
 
 .PROGRAM xrpr($in[],pars,$vals[],$types[])
+; Processes an XMLRPC responce and returns two string
+; arrays with the respective values and types.
+; REMARK:
+; ------
+;   XMLRPC responces returns by definition only one value.
+;   this procedure is written ONLY TO HANDLE RESPONCES
+;   WITH ARRAYS.
+; ARGUMENTS:
+; ---------
+;   $in[] String array with the XMLRPC responce
+; RETURNS:
+; -------
+;   pars: number OF arguments in the responce 
+;   $vals[]: string array with the values
+;   $types[]: string array with the types
   AUTO $tag
   AUTO posaux
   AUTO pos00
@@ -181,7 +242,7 @@
     RETURN
   END
 ; 1) Search the NEXT <value> tag, in the range [pos03,pos00]
-; 2) serach the <tag> after <value>, in range [pos00,pos01]
+; 2) search the <tag> after <value>, in range [pos00,pos01]
 ; 3.1) If this <tag> is </value>. then we get a string
 ; 3.2) If this <tag> is <array>, the we have find where
 ;      does it ends, and assign the vals "(pos,dim)"
@@ -251,6 +312,18 @@
 .END
 
 .PROGRAM xrpc($in[],$method,pars,$vals[],$types[])
+; Processes an XMLRPC and returns the name OF the
+; method the number OF arguments and two string
+; arrays with the respective values and types.
+; ARGUMENTS:
+; ---------
+;   $in[] String array with the XMLRPC responce
+; RETURNS:
+; -------
+;   $method:  name OF the method
+;   pars: number OF arguments in the responce 
+;   $vals[]: string array with the values
+;   $types[]: string array with the types
   AUTO $tag
   AUTO posaux
   AUTO pos00
@@ -334,6 +407,16 @@
 .END
 
 .PROGRAM httpms($msg[],sd,sc)
+; http message size. Read and computes the dize
+; OF an http messages in $msg[]. 
+; ARGUMENTS:
+; ---------
+;   $msg[]:  string array, http message
+; RETURNS:
+; -------
+;   sd:  uint size declared: the size declared in the 
+;        Content-Length field OF the http header
+;   sc:  uint, size computed: The size computed OF the message
   AUTO $endline
   AUTO REAL pos00
   AUTO REAL pos01
@@ -348,16 +431,23 @@
   END
   pos02=pos01 
   CALL stapos($msg[],$endline,pos02,pos00)
+  ;sd = size declared
   sd=VAL($UNPACK($msg[],pos01+1,pos02-pos01-1))
   pos00=1
   CALL stapos($msg[],$endline+$endline,pos00,pos01)
   CALL stalen($msg[],ml)
   sc=ml-pos01
-
 .END
 
 
 .PROGRAM xrunarr1($msg[],$ainfo,$vals[],$types[],size)
+; xr unpack array. unpacks an array and RETURN a list
+; with the values and types inside the array
+; ARGUMENTS:
+; ---------
+;    $msg[]: string array containing a xmlrpc array
+;    $ainfo: string containing the position where the 
+;            array is inside $msg[]
   AUTO REAL maxsize
   AUTO REAL ic
   AUTO REAL pos00
@@ -378,6 +468,18 @@
 
 
 .PROGRAM xrnextvalue($in[],posini,$val,$type,pos01)
+; Get the NEXT value and its TYPE inside the string array
+; $in[] starting from the position posini.
+; ARGUMENTS:
+; ---------
+;    $in[]: string array containing xmlrpc values
+;    posini: uint, position where start TO search
+; RETURNS:
+; -------
+;    $val: value
+;    $type: type
+;    pos01: position OF the END 
+
   AUTO REAL pos00
   AUTO REAL posaux
   AUTO $tag
