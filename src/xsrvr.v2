@@ -1,5 +1,4 @@
-.PROGRAM ubz.xrpcsrvr($port)
-  CALL xrpc.srvr()
+.PROGRAM ubz.xmlrpc.srvr()
 .END
 
 
