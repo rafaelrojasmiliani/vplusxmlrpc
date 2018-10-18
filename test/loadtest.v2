@@ -1,0 +1,22 @@
+
+.PROGRAM testloader()
+.END
+
+.PROGRAM xmlrpc.run.test()
+  MC LOAD ..\src\soc.v2
+  MC LOAD ..\src\sta.v2
+  MC LOAD ..\src\xmlrpc.v2
+  MC LOAD ..\src\xsrvr.v2
+  MC LOAD testserver.v2
+  MC EXECUTE 2 xmlrpc.test.srv
+.END
+
+.PROGRAM xmlrpc.del.test()
+  MC ABORT 2
+  MC KILL 2
+  MC DELETEM ubz.soc
+  MC DELETEM ubz.sta
+  MC DELETEM ubz.xmlrpc
+  MC DELETEM ubz.xmlrpc.srvr
+  MC DELETEM xmlrpc.test
+.END

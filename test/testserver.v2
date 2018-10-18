@@ -1,0 +1,135 @@
+
+
+.PROGRAM xmlrpc.test()
+.END
+
+.PROGRAM xmlrpc.test.srv()
+; Test PROGRAM TO show the basic features
+; OF this xmlrpc library
+; 
+
+  AUTO $port
+  LOCAL $methods[]
+
+  $port = "5000"
+
+  $methods[0] = "echo"
+
+  $methods[1] = "cstate"
+
+  $methods[2] = "ctask"
+
+  $methods[3] = "ckill"
+
+  $methods[4] = "cdeletem"
+
+  $methods[5] = "cload"
+
+  CALL xmlrpc.srvr($port,$methods[],4)
+
+.END
+
+
+.PROGRAM echo(iargn,$in[],$ityp[],oargn,$out[],$otyp[])
+  AUTO REAL i
+  oargn = iargn
+  FOR i = 0 TO iargn-1
+    $out[i] = $in[i]
+    $otyp[i] = $ityp[i]
+  END
+.END
+
+
+.PROGRAM cstate(iargn,$in[],$ityp[],oargn,$out[],$otyp[])
+  AUTO REAL s
+  AUTO $msg
+  AUTO $title
+  s=STATE(1)
+  $out[0] = "1"
+  $out[1] = "robot state"
+  $out[2] = $ENCODE(/I1,s)
+  CASE s OF
+    VALUE 0:
+      $out[3] = "Resetting system after robot power has been turned off"
+    VALUE 1:
+      $out[3] = "A fatal error has occurred and robot power cannot be turned on"
+    VALUE 2: 
+      $out[3]="Waiting for user to turn on robot power."
+    VALUE 3: 
+      $out[3]="Robot power was just turned on; initialization is occurring."
+    VALUE 4: 
+      $out[3]="Indicates that Manual control mode is active (see Select=3)."
+    VALUE 5: 
+      $out[3]="A CALIBRATE command or instruction is executing."
+    VALUE 6: 
+      $out[3]="Not used."
+    VALUE 7:
+      $out[3]="Robot is under program control."
+    VALUE 8: 
+      $out[3]="Robot power is on; robot is not calibrated and cannot be moved."
+    VALUE 9:
+      $out[3]="Selected robot is stopped waiting for the STEP button on the pendant to"
+  END
+.END
+
+.PROGRAM ctask(iargn,$in[],$ityp[],oargn,$out[],$otyp[])
+  AUTO REAL i
+  AUTO REAL res
+  oargn = 0
+  FOR i=0 TO 24
+    $out[oargn] = ""
+    res = TASK(1,i) 
+    IF res <> 0 THEN
+	    CALL strcat($out[oargn],"<data>")
+	    CALL strcat($out[oargn],"<value><int>"+$ENCODE(/I2,i)+"</int></value>")
+	    CALL strcat($out[oargn],"<value><int>"+$ENCODE(/I2,res)+"</int></value>")
+	    CALL strcat($out[oargn],"</data>")
+	    $otyp[oargn]="array"
+      oargn = oargn + 1
+    END
+  END 
+.END
+
+
+.PROGRAM ckill(iargn,$in[],$ityp[],oargn,$out[],$otyp[])
+  AUTO REAL tnum
+  oargn = 0
+  IF iargn == 1 THEN
+    IF (STRDIF($ityp[0],"int")==0) OR (STRDIF($ityp[0],"i4")==0) THEN
+      tnum  = VAL($in[0])    
+      tstat = TASK(1,tnum)
+      IF tstat == -1 THEN
+        RETURN
+      END
+
+      IF (tstat > 0) AND (tstat < 4) THEN
+        KILL tnum
+      ELSE
+        ABORT tnum
+        WHILE (tstat <> 3) DO
+          WAIT.EVENT , 0.005
+          tstat = TASK(1,tnum)
+        END
+        KILL tnum
+      END 
+    END
+  END
+.END
+
+.PROGRAM cdeletem(iargn,$in[],$ityp[],oargn,$out[],$otyp[])
+  IF ((iargn == 1) AND (STRDIF($ityp[0],"string")==0)) THEN
+    oargn = 1
+    $otyp[0]="int"
+    MCS "DELETEM "+$in[0]
+    $out[0]=$ENCODE(/I0,ERROR(-1,2))
+  END
+.END
+
+.PROGRAM cload(iargn,$in[],$ityp[],oargn,$out[],$otyp[])
+  IF ((iargn == 1) AND (STRDIF($ityp[0],"string")==0)) THEN
+    oargn = 1
+    $otyp[0]="int"
+    MCS "LOAD "+$in[0]
+    $out[0]=$ENCODE(/I0,ERROR(-1,2))
+  END
+.END

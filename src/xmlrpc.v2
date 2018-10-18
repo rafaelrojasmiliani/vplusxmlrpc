@@ -125,6 +125,55 @@
 .END
 
 
+.PROGRAM xmlrpc.gen.fault($ecode,$estr,$output[])
+; Generates an XMLRPC fault responce and store in in $output[]
+; ARGUMENTS:
+; ---------
+;     argn: uint, number OF arguments
+;     $vals[]: string array with the values
+;     $types[]: string array with the types OF the values
+; RETURNS:
+; -------
+;     $output[], string array with the XMLRPC responce.
+	LOCAL $auxstr[]
+  AUTO $endline
+  AUTO $newline
+  AUTO ailen
+  ;*Ambiguous AUTO invalid* (-477) ;Explanation: 
+  ;V+ has encountered an automatic variable with undetermined TYPE
+  ; add a REAL before (SEE manual)
+  AUTO REAL ici
+  AUTO REAL lenauxstr
+	$auxstr[14]=""
+	$auxstr[0]=""
+
+  $output[0]=""
+  $endline = $CHR(13)+$CHR(10)
+  $newline = $CHR(10)
+
+  CALL stai($output[])
+  CALL stai($auxstr[])
+
+
+  CALL staas($output[],"HTTP/1.0 200 OK"+$endline)
+  CALL staas($output[],"Server: adeptSCARA"+$endline)
+  CALL staas($output[],"Content-Type: text/xml"+$endline)
+
+  CALL staas($auxstr[],"<?xml version='1.0'?><methodResponce><fault><value><struct>")
+	CALL staas($auxstr[],"<member><name>faultCode</name>")
+	CALL staas($auxstr[],"<value><i4>"+$ecode+"</i4></value></member>")
+	CALL staas($auxstr[],"<member><name>faultString</name>")
+	CALL staas($auxstr[],"<value><string>"+$estr+"</string></value></member>")
+
+  CALL staas($auxstr[],"</struct></value></fault></methodResponce>")
+
+
+  CALL stalen($auxstr[],ailen)
+  CALL staas($output[],"Content-Length: "+$ENCODE(/I0,ailen)+$endline+$endline)
+  CALL staasa($output[],$auxstr[])
+
+  
+.END
 
 .PROGRAM xrntv($in[],$tag,ini,fin,$info)
 ; Get the value of the next tag  (text between < and >) from ini.

@@ -5,15 +5,17 @@
 .PROGRAM xmlrpc.srvr($port,$methods[],methods.num)
   LOCAL $bf00[]
   LOCAL $msg[]
-  LOCAL $mth.def[]
-  LOCAL $types[]
-  LOCAL $vals[]
+  LOCAL $it[]
+  LOCAL $iv[]
+  AUTO REAL iargn
+  AUTO REAL oargn
+  LOCAL $ot[]
+  LOCAL $ov[]
   AUTO $mth.str
   AUTO REAL handle
   AUTO REAL stat
   AUTO REAL mth.id
   AUTO REAL meth.id
-  AUTO REAL mth.def.len
   AUTO REAL msg.delen
   AUTO REAL msg.len
 
@@ -21,14 +23,7 @@
   handle = 0
   CALL stai($bf00[])
   CALL stai($msg[])
-  CALL stai($mth.def[])
 
-  ; -----------------------
-  ;     Define here the name of the calls
-  ; -----------------------------------
-  $mth.def[0]="assemblyCall"
-  $mth.def[1]="isAvailable"
-  mth.def.len = 7
   CALL soc.srv(soc,$port,"1")
 
   IF soc==0 THEN
@@ -53,10 +48,10 @@
           CALL staasa($msg[],$bf00[])
           CALL httpms($msg[],msg.delen,msg.len)
         END
-        CALL xmlrpc.call.get($msg[],$mth.str,pars,$vals[],$types[])
+        CALL xmlrpc.call.get($msg[],$mth.str,iargn,$iv[],$it[])
 ;        FOR m=1 TO pars
-;          TYPE "paramenter TYPE = "+$types[m-1]
-;          TYPE "paramenter value = "+$vals[m-1]
+;          TYPE "paramenter TYPE = "+$it[m-1]
+;          TYPE "paramenter value = "+$iv[m-1]
 ;        END
 		    meth.id=0
 		    DO
@@ -68,12 +63,15 @@
 
         IF (meth.id==methods.num) THEN
           TYPE "Error, method can't be found"
+          $ov[0]="Function not defined"
+          $ot[0]="string"
+          CALL xmlrpc.gen.fault("1","function does not exists",$msg[])
         ELSE
-          CALLS $mth.str(n,$vals[],$types[],$rvals[],$rtypes[],argn)
-          CALL xmlrpc.gen.res(argn,$rvals[],$rtypes,$resbuff)
+          CALLS $mth.str(iargn,$iv[],$it[],oargn,$ov[],$ot[])
+          CALL xmlrpc.gen.res(oargn,$ov[],$ot[],$msg[])
         END
         CALL write2array(soc,handle,$msg[])
-        ;close connection.
+        ;close connection with the client handle
         FCMND (soc, 600) $INTB(handle) ;Deallocates handle
         stat = IOSTAT(soc)
         ;Check STATUS OF FCMND
@@ -94,28 +92,4 @@
   
 .END
 
-;---------------------------------------
-; HERE you can find examples OF implemented calls
 
-
-.PROGRAM testresp(args,$vals[],$types[],$output[])
-  AUTO REAL i
-  TYPE "processing testCall"
-  CALL stai($output[]) 
-  TYPE "argument number", args
-  FOR i=0 TO args-1
-    TYPE "val", $vals[i]
-    TYPE "type", $types[i]
-  END
-  $types[0]="boolean"
-  $vals[0]="1"
-  CALL xrresp(1,$vals[],$types[],$output[])
-.END
-
-.PROGRAM isaval(args,$vals[],$types[],$output[])
-  TYPE "processing testCall"
-  CALL stai($output[]) 
-  $types[0]="boolean"
-  $vals[0]="1"
-  CALL xrresp(1,$vals[],$types[],$output[])
-.END

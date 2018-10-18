@@ -30,6 +30,18 @@
 
 .END
 
+.PROGRAM strcat($des,$src)
+  AUTO REAL des.len
+  AUTO REAL src.len
+  des.len = LEN($des)
+  src.len = LEN($src)
+
+  IF des.len + src.len <= 128 THEN
+    PACK $des,des.len+1,src.len  = $src
+  END
+
+.END
+
 .PROGRAM staasa($des[],$src[])
 ; Concatenates two string arrays, $des[] and $src[]
 ; ARGUMENTS:
