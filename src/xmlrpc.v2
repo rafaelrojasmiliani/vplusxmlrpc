@@ -1,9 +1,32 @@
 .PROGRAM ubz.xmlrpc()
+; Functions for creating and handling XMLRPC calls.
+; These functions are pre-processors and post-processors
+; of XMLRPCs in the sense that they only process array
+; of strings to extract or enconde the information
+; econded in the XML format.
+;
+;  xmlrpc.ccall Creates a XMLRPC call
+;  xmlrpc.gen.res generates a XMLRPC responce to a call
+;  xmlrpc.gen.fault generates a XMLRPC fault responce
+;  xrntv (internal use) tag handling
+;  xrnt  (internal use) tag handling
+;  xrpr  (internal use) tag handling
+;  xmlrpc.call.get decode a XMLRPC message in a string and
+;                  returns the method name, number or arguments
+;                  and two string arrays containting the argugment type ;
+;                  and value
+;  httpms (internal use) get the size of a http message from the header
+;  xrunarr1 (internal use) unpack array in XML format
+;  xrnextvalue (internal use) tag handling
+;  url2vpluscli decode a URL as ip+port (ip in V+ format)
+;  v2cliip2num Transform an IP string into a numerical value for V+ use
+;  v2cliip2array: Transform an IP string into a numeric array for V+ use
+;  v2cliparr_cmp: Compare an IP with an array (ad hoc solution to identify a network)
 .END
 .PROGRAM xmlrpc.ccall($name,argn,$args[],$types[],$output[])
 ; Description:
-;   xmlrpc.create.call
-;   Produce an XMLRPC call and write it in the
+; -----------
+;   Produce a string with a XMLRPC call and write it in the
 ;   array $output
 ;
 ; ARGUMENTS:
@@ -19,9 +42,6 @@
   AUTO $endline
   AUTO $newline
   AUTO ailen
-  ;*Ambiguous AUTO invalid* (-477) ;Explanation: 
-  ;V+ has encountered an automatic variable with undetermined TYPE
-  ; add a REAL before (SEE manual)
   AUTO REAL ici
   AUTO REAL lenauxstr
 	$auxstr[14]=""
@@ -61,6 +81,8 @@
 .END
 
 .PROGRAM xmlrpc.gen.res(argn,$vals[],$types[],$output[])
+; Description:
+; -----------
 ; Generates an XMLRPC responce and store in in $output[]
 ; ARGUMENTS:
 ; ---------
@@ -126,6 +148,8 @@
 
 
 .PROGRAM xmlrpc.gen.fault($ecode,$estr,$output[])
+; Description:
+; -----------
 ; Generates an XMLRPC fault responce and store in in $output[]
 ; ARGUMENTS:
 ; ---------
@@ -176,6 +200,8 @@
 .END
 
 .PROGRAM xrntv($in[],$tag,ini,fin,$info)
+; Description:
+; -----------
 ; Get the value of the next tag  (text between < and >) from ini.
 ; ARGUMENTS:
 ; ---------
@@ -223,6 +249,8 @@
 .END
 
 .PROGRAM xrnt($in[],ini,fin,$tag)
+; Description:
+; -----------
 ; get the next tag in the array $in from position ini
 ; and returns the tag and the position of its final char.
 ; ARGUMENTS:
@@ -253,6 +281,8 @@
 
 
 .PROGRAM xrpr($in[],pars,$vals[],$types[])
+; Description:
+; -----------
 ; Processes an XMLRPC responce and returns two string
 ; arrays with the respective values and types.
 ; REMARK:
@@ -361,8 +391,10 @@
 .END
 
 .PROGRAM xmlrpc.call.get($in[],$method,pars,$vals[],$types[])
-; Processes an XMLRPC and returns the name OF the
-; method the number OF arguments and two string
+; Description:
+; -----------
+; Processes an XMLRPC and returns the name of the
+; method, the number OF arguments and two string
 ; arrays with the respective values and types.
 ; ARGUMENTS:
 ; ---------
@@ -456,6 +488,8 @@
 .END
 
 .PROGRAM httpms($msg[],sd,sc)
+; Description:
+; -----------
 ; http message size. Read and computes the dize
 ; OF an http messages in $msg[]. 
 ; ARGUMENTS:
@@ -490,6 +524,8 @@
 
 
 .PROGRAM xrunarr1($msg[],$ainfo,$vals[],$types[],size)
+; Description:
+; -----------
 ; xr unpack array. unpacks an array and RETURN a list
 ; with the values and types inside the array
 ; ARGUMENTS:
@@ -517,6 +553,8 @@
 
 
 .PROGRAM xrnextvalue($in[],posini,$val,$type,pos01)
+; Description:
+; -----------
 ; Get the NEXT value and its TYPE inside the string array
 ; $in[] starting from the position posini.
 ; ARGUMENTS:
@@ -570,7 +608,16 @@
 
 
 .PROGRAM url2vpluscli($url,$ip,port)
-
+; Description:
+; -----------
+;   Transform a URL into IP + port
+; ARGUMENTS:
+; ---------
+;   $url: URL to be handled
+; RETURNS:
+; -------
+;   $ip  string IP inside the URL
+;   port  int port insude the URL
   AUTO REAL ic0
   AUTO REAL ic1
   $ip = $url
@@ -605,7 +652,9 @@
 
 
 .PROGRAM v2cliip2num($ip,num)
-  
+; Description:
+; -----------
+; Transform an IP string into a numerical value for V+ use
   AUTO REAL ic
   num = VAL($ip)*1.6777216E+07
   ic = POS($ip," ",1)
@@ -617,7 +666,9 @@
 .END
 
 .PROGRAM v2cliip2array($ip,num[])
-  
+; Description:
+; -----------
+;  Transform an IP string into a numeric array for V+ use
   AUTO REAL ic
   num[0] = INT(VAL($ip))
   ic = POS($ip," ",1)
@@ -629,7 +680,9 @@
 .END
 
 .PROGRAM v2cliparr_cmp($ip,num[],res)
-  
+; Description:
+; -----------
+; copare an IP with an array of numbers   
   AUTO REAL ic
   res= FALSE
   IF num[0] <> INT(VAL($ip)) THEN

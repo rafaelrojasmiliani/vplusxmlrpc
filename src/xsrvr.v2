@@ -3,6 +3,35 @@
 
 
 .PROGRAM xmlrpc.srvr($port,$methods[],methods.num)
+; DESCRIPTION
+; -----------
+; Implements a blocking XMLRC server able to associate to each a call a V+
+; method. This association is done thanks to the CALLS function of V+. CALLS is
+; able to call a V+ procedure using a string. So if the XMLRPC call corresponds
+; to a defined method, V+ will call that method with the corresponding arguments.
+; FIXME: CALLS is not optimal. This is an ad hoc solution.
+; FIXME: shall we use a "buffer" of tasks or create a task for each call? (no?)
+;
+; PARAMETERS:
+; ----------
+;  $port, string listing port in string format
+;  $methods[] array of strings with method list
+;  methods.num  int number of methods
+;
+; PROCEDURE:
+; ---------
+;  1) Create a listening socket in the desired port
+;  2) While (TRUE) loop
+;  2.1) As specified in the HTTP protocol, once a connection is
+;     initiated by a client, we fill up a buffer until the
+;     client closes the connection as follows:
+;  2.1.1) Parse the header of the HTTP message and get the length
+;         of the message.
+;  2.1.2) Fill up the buffer reading from the socket until the total
+;         length is reached
+;  2.2) Parse the XMLRPC message
+;  2.3) If the XMLRPC call name coincides with a name in $methods[] call
+;       such a method using CALLS.
   LOCAL $bf00[]
   LOCAL $msg[]
   LOCAL $it[]
@@ -33,6 +62,12 @@
 
 
   WHILE 1 DO
+    ; FIXME: here we have a memory limit for the
+    ;        received message given by the definition
+    ;        of read3array. The maximum length of the
+    ;        message shall be implemented directly here
+    ;        and we shall write functions able to reading
+    ;        arbitrarily lengths
     CALL read3array(soc,handle,$bf00[],stat) 
     CASE stat OF
       VALUE 100:; state OF the socket after a new connection

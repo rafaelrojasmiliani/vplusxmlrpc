@@ -1,5 +1,20 @@
 
 .PROGRAM ubz.soc()
+; This file contains the procedures to create a TCP socket
+; and implement it in a relatively "simple" way.
+; This file implement the following functions:
+;
+;   soc.cli Creates a "cliet" TCP/IP socket i.e. creates
+;            a socket connected to a remote server.
+;
+;   soc.srv Creates a "server" TCP/IP socket i.e. creates
+;            a litening socket associated to a port.
+;   
+;   The readarray and writearray functions are ad hoc solutions
+;   to the problem of fixed string lenght of V+8 OS.
+;   as each string has 124 chars, we need to use array of strings
+;   to read a realistic message. FIXME: such functions must be updated.
+
 .END
 
 .PROGRAM soc.cli(lun,$label,$ip,$port)
@@ -13,6 +28,13 @@
 ;  RETURNS:
 ;  -------
 ;    lun: a connected tcp socket
+;  PROCEDURE:
+;  ---------
+;    1) Call attach to assocuate the integer lun to a TCP socket using ATTACH
+;    2) Associate this lun to the remote IP using FSET
+;    3) Open the socket specifying the desired port and setting a buffer size
+;       using FOPEN
+;       FIXME: this point may be fixed y introducing the desired buffer size
 
 	AUTO status   ; aux var for error handling
 	ATTACH (lun,4) "TCP"
@@ -60,6 +82,12 @@
 ;  RETURNS:
 ;  -------
 ;    lun: a connected tcp socket
+;  PROCEDURE:
+;  ---------
+;    1) Assocuate the integer lun to a TCP socket using ATTACH
+;    2) Open the socket specifying the desired port and setting a buffer size
+;       using FOPEN
+;       FIXME: this point may be fixed y introducing the desired buffer size
 	AUTO status
 	ATTACH (lun,4) "TCP"
 	status = IOSTAT(lun)

@@ -1,5 +1,6 @@
 .PROGRAM ubz.sta()
-; String array library
+; String array library. Different function for string handling limited size
+; strings
 .END
 
 .PROGRAM staas($des[],$src)

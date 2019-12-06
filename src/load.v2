@@ -1,4 +1,7 @@
 .PROGRAM LAUNCH()
+; DESCRIPTION:
+; -----------
+; V+ Script to load the XMLRPC module in memory
   MC LOAD SOC.V2
   MC LOAD STA.V2
   MC LOAD XMLRPC.V2
