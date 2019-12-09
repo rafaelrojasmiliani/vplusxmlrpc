@@ -18,7 +18,7 @@ Add additional notes about how to deploy this on a live system
 
 ## Authors
 
-* **Rafael A. Rojas ** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
+* **Rafael A. Rojas ** - *Initial work* - [Rafael Rojas](https://gitlab.inf.unibz.it/Rafael.Rojas)
 
 
 ## License
