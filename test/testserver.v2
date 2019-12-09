@@ -1,12 +1,35 @@
 
 
 .PROGRAM xmlrpc.test()
+; This module implements a series of V+ functionalities
+; in XMLRPC services.
+; 
+; xmlrpc.test.srv(): Main task
+; echo; echoes the XMLRPC call
+; cstate: get the state of the robot V+ STATE
+; ctask: like ps, returns the list of task in V+ system
+; ckill implements V+ ABORT and KILL, kills a task 
+; cdeletem, deletes a module from V+ memory
+; cload, loads a module in V+ memory
+; All implemented functions here but xmlrpc.test.srv() have
+; the following arguments and returns
+; ARGUMENTS:
+; ---------
+;   iargn: int number of input arguments
+;   $in[]:  string array, string values of XMLRPC call
+;   $ityp[]: string array, string types of the XMLRPC call
+;   oargn: int, number of outputs
+;   $out[]: string array, string vales of XMLRPC outputs
+;   $otyp[]: string array, string types of the XMLRPC outputs
+; RETURNS:
+; -------
+;   $out[]: string array, string vales of XMLRPC outputs
+;   $otyp[]: string array, string types of the XMLRPC outputs
 .END
 
 .PROGRAM xmlrpc.test.srv()
-; Test PROGRAM TO show the basic features
+; Test program TO show the basic features
 ; OF this xmlrpc library
-; 
 
   AUTO $port
   LOCAL $methods[]
@@ -31,6 +54,22 @@
 
 
 .PROGRAM echo(iargn,$in[],$ityp[],oargn,$out[],$otyp[])
+; Description:
+; -----------
+;   Echoes a string
+;
+; ARGUMENTS:
+; ---------
+;   iargn: int number of input arguments
+;   $in[]:  string array, string values of XMLRPC call
+;   $ityp[]: string array, string types of the XMLRPC call
+;   oargn: int, number of outputs
+;   $out[]: string array, string vales of XMLRPC outputs
+;   $otyp[]: string array, string types of the XMLRPC outputs
+; RETURNS:
+; -------
+;   $out[]: string array, string vales of XMLRPC outputs
+;   $otyp[]: string array, string types of the XMLRPC outputs
   AUTO REAL i
   oargn = iargn
   FOR i = 0 TO iargn-1

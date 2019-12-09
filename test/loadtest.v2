@@ -1,8 +1,14 @@
 
 .PROGRAM testloader()
+;
+;
 .END
 
 .PROGRAM xmlrpc.run.test()
+; Description:
+; -----------
+;   Loads the test in V+ memory and runs it
+;   This will execute the test in the Task 2 
   MC LOAD ..\src\soc.v2
   MC LOAD ..\src\sta.v2
   MC LOAD ..\src\xmlrpc.v2
@@ -12,6 +18,11 @@
 .END
 
 .PROGRAM xmlrpc.del.test()
+; Description:
+; -----------
+;   Aborts the execution of the test, deallocate the task
+;   and delets the test from V+ memory.
+;   This will abort and kill the Task 2 
   MC ABORT 2
   MC KILL 2
   MC DELETEM ubz.soc
