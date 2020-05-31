@@ -1,6 +1,6 @@
 # XMLRPC library for V+
 
-This is a small library intended to handle the XMLRPC inside the embedded V+ OS version 8.
+This is a small library intended to handle the XMLRPC inside the embedded V+ OS version 8 of Adept/Omron or Staubli robots.
 It allows to implement a XMLRPC server capable to associate XMLRPC calls to V+ procedures.
 
 ### Installing
@@ -18,7 +18,7 @@ Add additional notes about how to deploy this on a live system
 
 ## Authors
 
-* **Rafael A. Rojas ** - *Initial work* - [Rafael Rojas](https://gitlab.inf.unibz.it/Rafael.Rojas)
+* **Rafael A. Rojas ** - *Initial work* - [Rafael Rojas](https://github.com/rafaelrojasmilian)
 
 
 ## License
